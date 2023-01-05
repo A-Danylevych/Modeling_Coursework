@@ -5,6 +5,7 @@ import Element.ProcessGiver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class Model {
@@ -60,17 +61,18 @@ public class Model {
         System.out.println("\n-------------RESULTS-------------");
         int totalCreated = 0;
         int totalFailure = 0;
-        double totalTimeInModel = 0;
+        double totalTimeInProcess = 0;
         double totalTimeWaiting = 0;
+        double totalTimeInModel = 0;
         double ramUsage = 0;
-        int count = 0;
+        double count = 0;
+        var counted = new LinkedList<Integer>();
         var totalTimeById = new HashMap<Integer, Double>();
         var totalQueueTimeById = new HashMap<Integer, Double>();
         var totalTimeWorkingById = new HashMap<Integer, Double>();
         for (Element e : elements) {
             e.printResult();
             if (e instanceof Create){
-                totalCreated = e.getQuantity();
                 System.out.println();
             }
             if (e instanceof Process p) {
@@ -93,9 +95,14 @@ public class Model {
                     var timeInProcess = p.getMeanLoadById().get(i)/p.getCompletedById().get(i);
                     var timeWaiting = p.getMeanQueueById().get(i)/p.getCompletedById().get(i);
                     var totalTime =  timeWaiting + timeInProcess;
-                    totalTimeInModel += timeInProcess;
+                    totalTimeInModel += totalTime;
+                    totalTimeInProcess += timeInProcess;
                     totalTimeWaiting += timeWaiting;
-                    count++;
+                    if(!counted.contains(i)){
+                        count++;
+                        counted.add(i);
+                    }
+
 
                     AddOrCreate(totalQueueTimeById, i, timeWaiting);
                     AddOrCreate(totalTimeById,i, totalTime);
@@ -129,7 +136,8 @@ public class Model {
                 totalTimeWorkingById.entrySet()) {
             System.out.println("Type " + item.getKey() + " mean in process time=" + item.getValue() );
         }
-        System.out.println("All types mean in process time=" + totalTimeInModel/count );
+        System.out.println("All types mean in model time=" + totalTimeInModel/count );
+        System.out.println("All types mean in process time=" + totalTimeInProcess/count );
         System.out.println("All types mean waiting time=" + totalTimeWaiting/count );
         System.out.println("Mean RAM usage=" + ramUsage/timeCurrent);
     }
