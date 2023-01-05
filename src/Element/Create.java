@@ -15,7 +15,7 @@ public class Create extends Element {
         this.defaultId = defaultId;
     }
     public Create(){
-        defaultId = 0;
+        this(0);
     }
 
     @Override

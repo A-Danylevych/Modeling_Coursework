@@ -8,20 +8,21 @@ import java.util.*;
 
 public class Process extends Element {
     private boolean waitToIN;
-    private int maxState;
+    protected int maxState;
+    private int inCount;
 
     private final Map<Integer, Double> meanQueueById;
     private final Map<Integer, Double> meanLoadById;
-    private final Map<Integer, Integer> stateById;
-    private final Map<Integer, Integer> changedById;
-    private final Map<Integer, Integer> failureById;
-    private final Map<Integer, Integer> completedById;
-    private Queue queue;
+    protected final Map<Integer, Integer> stateById;
+    protected final Map<Integer, Integer> changedById;
+    protected final Map<Integer, Integer> failureById;
+    protected final Map<Integer, Integer> completedById;
+    protected Queue queue;
     private NextProcessManager nextProcessManager;
-    private Map<Integer,ChangeProcessManager> changeProcessManagerMap;
-    private final PriorityQueue<Pair<Double, Integer>> nextTimeQueue;
-    private Map<Integer, IRandom> queueDistribution;
-    private Map<Integer, Integer> outMap;
+    protected Map<Integer,ChangeProcessManager> changeProcessManagerMap;
+    protected final PriorityQueue<Pair<Double, Integer>> nextTimeQueue;
+    private Map<Integer, IRandom> typeDistribution;
+    protected Map<Integer, Integer> outMap;
     public Process() {
         meanQueueById = new HashMap<>();
         stateById = new HashMap<>();
@@ -37,7 +38,20 @@ public class Process extends Element {
             inAct(id);
         }
     }
+    public void setInfiniteQueue(int index){
+        setInfiniteQueue(index, index);
+    }
 
+    public void setInfiniteQueue(int firstIndex, int lastIndex){
+        queue = new Queue(Integer.MAX_VALUE,true, firstIndex, lastIndex, true);
+    }
+    public void setZeroQueue(int index){
+        setZeroQueue(index, index);
+    }
+
+    public void setZeroQueue(int firstIndex, int lastIndex){
+        queue = new Queue(0,true, firstIndex, lastIndex, true);
+    }
     @Override
     public double getTimeNext() {
         if(nextTimeQueue.isEmpty()){
@@ -56,14 +70,15 @@ public class Process extends Element {
         super.setTimeNext(nextTimeQueue.peek().getKey());
     }
     public void inAct(int queueId) {
+        setInCount(getInCount()+1);
         if (super.getState() < maxState) {
             var timeNext = super.getTimeCurrent() + getDelay(queueId);
-            IncrementOrCreateInt(stateById, queueId);
+            IncrementOrCreate(stateById, queueId);
             super.setState(getState()+1);
             setTimeNext(timeNext, queueId);
         } else {
             if(!queue.TryAddToQueue(queueId)){
-              IncrementOrCreateInt(failureById, queueId);
+              IncrementOrCreate(failureById, queueId);
             }
         }
     }
@@ -88,27 +103,30 @@ public class Process extends Element {
         }
         if(isAllowedToChange()){
             if(changeProcessManagerMap.get(getCurrentId()).TryChangeQueue()){
-               IncrementOrCreateInt(changedById, getCurrentId());
+               IncrementOrCreate(changedById, getCurrentId());
             }
         }
-        int currentId = getCurrentId();
-        System.out.println(currentId);
-        stateById.put(currentId, stateById.get(currentId)-1);
-        IncrementOrCreateInt(completedById, getCurrentId());
+        outStat();
         nextTimeQueue.poll();
     }
 
-    private void getFromQueue() {
+    protected void outStat(){
+        int currentId = getCurrentId();
+        stateById.put(currentId, stateById.get(currentId)-1);
+        IncrementOrCreate(completedById, currentId);
+    }
+
+    protected void getFromQueue() {
         int queueId = queue.getCurrentQueueId();
         queue.decrementQueue(queueId);
         var timeNext = super.getTimeCurrent() + getDelay(queueId);
-        IncrementOrCreateInt(stateById, queueId);
+        IncrementOrCreate(stateById, queueId);
         setTimeNext(timeNext, queueId);
         var state = getState()+1;
         super.setState(state);
     }
 
-    private void inAct(Process next){
+    protected void inAct(Process next){
         if(next != null){
             if(outMap!= null && outMap.containsKey(getCurrentId())){
                 next.inAct(outMap.get(getCurrentId()));
@@ -129,7 +147,7 @@ public class Process extends Element {
 
         return nextProcessManager.getNextElement(getCurrentId());
     }
-    private boolean isAllowedToChange(){
+    protected boolean isAllowedToChange(){
         return changeProcessManagerMap != null && changeProcessManagerMap.containsKey(getCurrentId());
     }
 
@@ -173,7 +191,7 @@ public class Process extends Element {
         }
     }
 
-    private void IncrementOrCreateInt(Map<Integer, Integer> map, int id){
+    protected void IncrementOrCreate(Map<Integer, Integer> map, int id){
         if(map.containsKey(id)){
             map.put(id, map.get(id)+1);
         }
@@ -197,12 +215,12 @@ public class Process extends Element {
         this.maxState = maxState;
     }
 
-    public void setQueueDistribution(Map<Integer, IRandom> queueDistribution) {
-        this.queueDistribution = queueDistribution;
+    public void setTypeDistribution(Map<Integer, IRandom> queueDistribution) {
+        this.typeDistribution = queueDistribution;
     }
     public double getDelay(int id){
-        if(queueDistribution != null){
-            return queueDistribution.get(id).Random();
+        if(typeDistribution != null){
+            return typeDistribution.get(id).Random();
         }
         return super.getDelay();
     }
@@ -278,4 +296,17 @@ public class Process extends Element {
         return changedById;
     }
     public Map<Integer, Integer> getCompletedById() {return completedById;}
+
+    public int getInCount() {
+        return inCount;
+    }
+
+    public void setInCount(int inCount) {
+        this.inCount = inCount;
+    }
+    @Override
+    public void printResult(){
+        super.printResult();
+        System.out.println("in Quantity =" + inCount);
+    }
 }

@@ -1,6 +1,7 @@
 import Element.Element;
 import Element.Process;
 import Element.Create;
+import Element.ProcessGiver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +60,10 @@ public class Model {
         System.out.println("\n-------------RESULTS-------------");
         int totalCreated = 0;
         int totalFailure = 0;
+        double totalTimeInModel = 0;
+        double totalTimeWaiting = 0;
+        double ramUsage = 0;
+        int count = 0;
         var totalTimeById = new HashMap<Integer, Double>();
         var totalQueueTimeById = new HashMap<Integer, Double>();
         var totalTimeWorkingById = new HashMap<Integer, Double>();
@@ -66,6 +71,7 @@ public class Model {
             e.printResult();
             if (e instanceof Create){
                 totalCreated = e.getQuantity();
+                System.out.println();
             }
             if (e instanceof Process p) {
                 System.out.println("mean length of queue = " +
@@ -73,7 +79,7 @@ public class Model {
                         + "\nfailure probability  = " +
                         p.getFailure() / (double) p.getQuantity());
                 System.out.println("mean load of process = " +
-                        p.getMeanLoad() / timeCurrent);
+                        p.getMeanLoad() / timeCurrent / p.getMaxState());
                 System.out.println("Mean time in process =" +
                         p.getMeanLoad()/p.getQuantity());
                 System.out.println("Mean time waiting ="+
@@ -81,16 +87,33 @@ public class Model {
                 System.out.println("failure =" + p.getFailure());
                 totalFailure += p.getFailure();
                 System.out.println("Changes =" + p.getChangeCount());
-                var keys = ((Process) e).getStateById().keySet();
+                var keys = ((Process) e).getCompletedById().keySet();
                 for (var i :
                         keys) {
                     var timeInProcess = p.getMeanLoadById().get(i)/p.getCompletedById().get(i);
                     var timeWaiting = p.getMeanQueueById().get(i)/p.getCompletedById().get(i);
                     var totalTime =  timeWaiting + timeInProcess;
+                    totalTimeInModel += timeInProcess;
+                    totalTimeWaiting += timeWaiting;
+                    count++;
+
                     AddOrCreate(totalQueueTimeById, i, timeWaiting);
                     AddOrCreate(totalTimeById,i, totalTime);
                     AddOrCreate(totalTimeWorkingById, i, timeInProcess);
+
+                    System.out.println("Type " + i + " mean load of process = " +
+                            p.getMeanLoadById().get(i) / timeCurrent / p.getMaxState());
+                    System.out.println("Type " + i + " mean total time in process =" +
+                            totalTime);
+                    System.out.println("Type " + i + " mean time waiting ="+
+                            timeWaiting);
+                    System.out.println("Type " + i + " mean time in process =" +
+                            timeInProcess);
                 }
+                System.out.println();
+            }
+            if(e instanceof ProcessGiver pg){
+                ramUsage = pg.getRamUsage();
             }
         }
         System.out.println("failure probability=" + (double)totalFailure/totalCreated);
@@ -106,6 +129,9 @@ public class Model {
                 totalTimeWorkingById.entrySet()) {
             System.out.println("Type " + item.getKey() + " mean in process time=" + item.getValue() );
         }
+        System.out.println("All types mean in process time=" + totalTimeInModel/count );
+        System.out.println("All types mean waiting time=" + totalTimeWaiting/count );
+        System.out.println("Mean RAM usage=" + ramUsage/timeCurrent);
     }
     private void AddOrCreate(Map<Integer, Double> map, int id, double value){
         if(map.containsKey(id)){
