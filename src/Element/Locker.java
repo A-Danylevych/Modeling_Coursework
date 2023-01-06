@@ -37,4 +37,13 @@ public class Locker {
     public double getUsage(){
         return (double) this.available/this.maxAvailable;
     }
+    public int getAvailable(){
+        return this.available;
+    }
+    public int getMaxAvailable(){
+        return this.maxAvailable;
+    }
+    public int getUsed(){
+        return this.maxAvailable-this.available;
+    }
 }

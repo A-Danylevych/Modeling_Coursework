@@ -28,10 +28,10 @@ public class ProcessGiver extends Process{
     @Override
     public void doStatistics(double delta) {
         super.doStatistics(delta);
-        ramUsage = ramUsage + locker.getUsage()*delta;
+        ramUsage = ramUsage + locker.getUsed()*delta;
     }
 
     public double getRamUsage() {
-        return ramUsage;
+        return ramUsage/locker.getMaxAvailable();
     }
 }
