@@ -46,7 +46,7 @@ public class ProcessTaker extends Process{
             else {
                 interruptTime = getTimeCurrent() + interruptDelay.Random();
             }
-            if(getState() != 0){
+            if(getState() != 0 && getTimeCurrent() == getTimeNext()){
                 Interrupt();
             }
         }else {
