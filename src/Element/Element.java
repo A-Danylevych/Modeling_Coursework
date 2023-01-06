@@ -13,6 +13,10 @@ public class Element {
     private static int nextId=0;
     private int id;
 
+    public static void newModel(){
+        nextId=0;
+    }
+
     public Element(){
         timeNext = 0;
         timeCurrent = timeNext;
@@ -31,7 +35,6 @@ public class Element {
     public void setDistribution(IRandom distribution) {
         this.distribution = distribution;
     }
-
 
     public int getQuantity() {
         return quantity;

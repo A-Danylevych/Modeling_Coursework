@@ -14,6 +14,7 @@ public class Model {
     double timeNext, timeCurrent;
     int currentEventId;
     int lastIndex;
+    boolean showStat = true;
 
     public Model(ArrayList<Element> elements) {
         this.elements = elements;
@@ -21,7 +22,7 @@ public class Model {
         currentEventId = 0;
         timeCurrent = timeNext;
     }
-    public void simulate(double time) {
+    public Result simulate(double time) {
 
         while (timeCurrent < time) {
             timeNext = Double.MAX_VALUE;
@@ -32,9 +33,12 @@ public class Model {
 
                 }
             }
+            if(showStat){
             System.out.println("\nIt's time for event in " +
                     elements.get(currentEventId).getName() +
                     ", time =   " + timeNext);
+            }
+
             for (Element e : elements) {
                 e.doStatistics(timeNext - timeCurrent);
             }
@@ -48,9 +52,11 @@ public class Model {
                     e.outAct();
                 }
             }
+            if(showStat){
             printInfo();
+            }
         }
-        printResult();
+        return printResult();
     }
 
     public void printInfo() {
@@ -58,8 +64,9 @@ public class Model {
             e.printInfo();
         }
     }
-    public void printResult() {
-        System.out.println("\n-------------RESULTS-------------");
+    public Result printResult() {
+        if(showStat)
+            System.out.println("\n-------------RESULTS-------------");
         int totalCreated = 0;
         int totalFailure = 0;
         double meanTimeInProcess = 0;
@@ -73,27 +80,32 @@ public class Model {
         var totalQueueTimeById = new HashMap<Integer, Double>();
         var totalTimeWorkingById = new HashMap<Integer, Double>();
         for (Element e : elements) {
-            e.printResult();
-            if(e.getId() == lastIndex){
-                totalCompleted = e.getQuantity();
+            if(showStat) {
+                e.printResult();
             }
             if (e instanceof Create) {
-                System.out.println();
+                if (showStat)
+                    System.out.println();
             }
             if (e instanceof Process p) {
-                System.out.println("mean length of queue = " +
-                        p.getMeanQueue() / timeCurrent
-                        + "\nfailure probability  = " +
-                        p.getFailure() / (double) p.getQuantity());
-                System.out.println("mean load of process = " +
-                        p.getMeanLoad() / timeCurrent / p.getMaxState());
-                System.out.println("Mean time in process =" +
-                        p.getMeanLoad()/p.getQuantity());
-                System.out.println("Mean time waiting ="+
-                        p.getMeanQueue()/p.getQuantity());
-                System.out.println("failure =" + p.getFailure());
+                if(e.getId() == lastIndex){
+                    totalCompleted = e.getQuantity();
+                }
+                if(showStat) {
+                    System.out.println("mean length of queue = " +
+                            p.getMeanQueue() / timeCurrent
+                            + "\nfailure probability  = " +
+                            p.getFailure() / (double) p.getQuantity());
+                    System.out.println("mean load of process = " +
+                            p.getMeanLoad() / timeCurrent / p.getMaxState());
+                    System.out.println("Mean time in process =" +
+                            p.getMeanLoad() / p.getQuantity());
+                    System.out.println("Mean time waiting =" +
+                            p.getMeanQueue() / p.getQuantity());
+                    System.out.println("failure =" + p.getFailure());
+                    System.out.println("Changes =" + p.getChangeCount());
+                }
                 totalFailure += p.getFailure();
-                System.out.println("Changes =" + p.getChangeCount());
                 double currentTimeInProcess = 0;
                 var keys = ((Process) e).getInById().keySet();
                 for (var i :
@@ -113,7 +125,6 @@ public class Model {
                         counted.add(i);
                     }
 
-
                     AddOrCreate(totalQueueTimeById, i, timeWaiting);
                     AddOrCreate(totalTimeById,i, totalTime);
                     AddOrCreate(totalTimeWorkingById, i, timeInProcess);
@@ -122,39 +133,47 @@ public class Model {
                             p.getMeanLoadById().get(i) / timeCurrent / p.getMaxState() :
                             0;
 
-                    System.out.println("Type " + i + " mean load of process = " + load);
-                    System.out.println("Type " + i + " mean total time in process =" +
-                            totalTime);
-                    System.out.println("Type " + i + " mean time waiting ="+
-                            timeWaiting);
-                    System.out.println("Type " + i + " mean time in process =" +
-                            timeInProcess);
+                    if(showStat) {
+                        System.out.println("Type " + i + " mean load of process = " + load);
+                        System.out.println("Type " + i + " mean total time in process =" +
+                                totalTime);
+                        System.out.println("Type " + i + " mean time waiting =" +
+                                timeWaiting);
+                        System.out.println("Type " + i + " mean time in process =" +
+                                timeInProcess);
+                        System.out.println();
+                    }
                 }
                 var completed = p.getCompletedById().keySet().size();
                 meanTimeInProcess += currentTimeInProcess/completed;
-                System.out.println();
             }
             if(e instanceof ProcessGiver pg){
                 ramUsage = pg.getRamUsage();
             }
         }
-        System.out.println("failure probability=" + (double)totalFailure/totalCreated);
-        for (var item :
-                totalTimeById.entrySet()) {
-            System.out.println("Type " + item.getKey() + " mean time=" + item.getValue() );
+        if(showStat) {
+            System.out.println("failure probability=" + (double) totalFailure / totalCreated);
+            for (var item :
+                    totalTimeById.entrySet()) {
+                System.out.println("Type " + item.getKey() + " mean time=" + item.getValue());
+            }
+            for (var item :
+                    totalQueueTimeById.entrySet()) {
+                System.out.println("Type " + item.getKey() + " mean waiting time=" + item.getValue());
+            }
+            for (var item :
+                    totalTimeWorkingById.entrySet()) {
+                System.out.println("Type " + item.getKey() + " mean in process time=" + item.getValue());
+            }
+
+            System.out.println("All types mean in model time=" + totalTimeInModel / count);
+            System.out.println("All types mean in process time=" + meanTimeInProcess);
+            System.out.println("All types mean waiting time=" + totalTimeWaiting / count);
+            System.out.println("Mean RAM usage=" + ramUsage / timeCurrent);
         }
-        for (var item :
-                totalQueueTimeById.entrySet()) {
-            System.out.println("Type " + item.getKey() + " mean waiting time=" + item.getValue() );
-        }
-        for (var item :
-                totalTimeWorkingById.entrySet()) {
-            System.out.println("Type " + item.getKey() + " mean in process time=" + item.getValue() );
-        }
-        System.out.println("All types mean in model time=" + totalTimeInModel/count );
-        System.out.println("All types mean in process time=" + meanTimeInProcess);
-        System.out.println("All types mean waiting time=" + totalTimeWaiting/count);
-        System.out.println("Mean RAM usage=" + ramUsage/timeCurrent);
+        var result = new Result();
+        result.Completed = totalCompleted;
+        return result;
     }
     private void AddOrCreate(Map<Integer, Double> map, int id, double value){
         if(map.containsKey(id)){
@@ -163,6 +182,12 @@ public class Model {
         else {
             map.put(id, value);
         }
+    }
+    public void setLastIndex(int lastIndex){
+        this.lastIndex = lastIndex;
+    }
+    public void setShowStat(boolean showStat){
+        this.showStat = showStat;
     }
 }
 

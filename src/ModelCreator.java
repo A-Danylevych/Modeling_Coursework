@@ -16,13 +16,13 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
-public class Main {
+public class ModelCreator {
 
-    public static void main(String[] args) {
+    public static Result Create(int ramCount, int cores, double meanTime, boolean showStat) {
         // Створення СМО
         Create task = new Create();
         Create interruption = new Create();
-        Locker ram = new Locker(131, 131);
+        Locker ram = new Locker(ramCount, ramCount);
         ProcessTaker processor = new ProcessTaker(ram);
         Process disk1 = new Process();
         Process disk2 = new Process();
@@ -46,9 +46,9 @@ public class Main {
         interruption.setNextElement(processor);
 
         // Налаштування СМО процесор
-        processor.setDistribution(new NormRandom(10, 3));
+        processor.setDistribution(new NormRandom(meanTime, 3));
         processor.setInterruptDelay(new ExpRandom(1./6));
-        processor.setMaxState(2);
+        processor.setMaxState(cores);
         processor.setInterrupter(interruption);
 
 
@@ -120,6 +120,8 @@ public class Main {
 
 
         Model model = new Model(list);
-        model.simulate(6000.0);
+        model.setLastIndex(channel.getId());
+        model.setShowStat(showStat);
+        return model.simulate(6000.0);
     }
 }

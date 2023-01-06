@@ -297,6 +297,9 @@ public class Process extends Element {
         return changedById;
     }
     public Map<Integer, Integer> getCompletedById() {return completedById;}
+    public int getCompleted(){
+        return sumInt(completedById);
+    }
 
     public int getInCount() {
         return sumInt(inById);
