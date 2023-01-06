@@ -13,6 +13,7 @@ public class Model {
     private final ArrayList<Element> elements;
     double timeNext, timeCurrent;
     int currentEventId;
+    int lastIndex;
 
     public Model(ArrayList<Element> elements) {
         this.elements = elements;
@@ -61,18 +62,22 @@ public class Model {
         System.out.println("\n-------------RESULTS-------------");
         int totalCreated = 0;
         int totalFailure = 0;
-        double totalTimeInProcess = 0;
+        double meanTimeInProcess = 0;
         double totalTimeWaiting = 0;
         double totalTimeInModel = 0;
         double ramUsage = 0;
         double count = 0;
+        int totalCompleted =0;
         var counted = new LinkedList<Integer>();
         var totalTimeById = new HashMap<Integer, Double>();
         var totalQueueTimeById = new HashMap<Integer, Double>();
         var totalTimeWorkingById = new HashMap<Integer, Double>();
         for (Element e : elements) {
             e.printResult();
-            if (e instanceof Create){
+            if(e.getId() == lastIndex){
+                totalCompleted = e.getQuantity();
+            }
+            if (e instanceof Create) {
                 System.out.println();
             }
             if (e instanceof Process p) {
@@ -89,6 +94,7 @@ public class Model {
                 System.out.println("failure =" + p.getFailure());
                 totalFailure += p.getFailure();
                 System.out.println("Changes =" + p.getChangeCount());
+                double currentTimeInProcess = 0;
                 var keys = ((Process) e).getInById().keySet();
                 for (var i :
                         keys) {
@@ -100,7 +106,7 @@ public class Model {
                             0;
                     var totalTime =  timeWaiting + timeInProcess;
                     totalTimeInModel += totalTime;
-                    totalTimeInProcess += timeInProcess;
+                    currentTimeInProcess += timeInProcess;
                     totalTimeWaiting += timeWaiting;
                     if(!counted.contains(i)){
                         count++;
@@ -124,6 +130,8 @@ public class Model {
                     System.out.println("Type " + i + " mean time in process =" +
                             timeInProcess);
                 }
+                var completed = p.getCompletedById().keySet().size();
+                meanTimeInProcess += currentTimeInProcess/completed;
                 System.out.println();
             }
             if(e instanceof ProcessGiver pg){
@@ -144,8 +152,8 @@ public class Model {
             System.out.println("Type " + item.getKey() + " mean in process time=" + item.getValue() );
         }
         System.out.println("All types mean in model time=" + totalTimeInModel/count );
-        System.out.println("All types mean in process time=" + totalTimeInProcess/count );
-        System.out.println("All types mean waiting time=" + totalTimeWaiting/count );
+        System.out.println("All types mean in process time=" + meanTimeInProcess);
+        System.out.println("All types mean waiting time=" + totalTimeWaiting/count);
         System.out.println("Mean RAM usage=" + ramUsage/timeCurrent);
     }
     private void AddOrCreate(Map<Integer, Double> map, int id, double value){
