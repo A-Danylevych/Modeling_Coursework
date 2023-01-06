@@ -7,12 +7,12 @@ public class Tester {
         int startCores = 2;
         int startTime = 10;
         System.out.println("\n-------------TEST-------------");
-        System.out.println("ram      cores      time      completed");
-        for (int ram = startRam; ram <= startRam* factor; ram*= factor) {
-            for (int cores = startCores; cores <= startCores*factor; cores*= factor) {
-                for (int meanTime = startTime; meanTime <= startTime*factor; meanTime*= factor) {
+        System.out.println("time      cores      ram      completed");
+        for (int ram = startRam*factor; ram >= startRam; ram/= factor) {
+            for (int cores = startCores*factor; cores >= startCores; cores/= factor) {
+                for (int meanTime = startTime*factor; meanTime >= startTime; meanTime/= factor) {
                     var completed = ModelCreator.Create(ram, cores, meanTime, false).Completed;
-                    System.out.println(ram +"         " + cores +"         "+meanTime+"          "+completed );
+                    System.out.println(meanTime +"         " + cores +"         "+ram+"          "+completed );
                     Element.newModel();
                 }
             }
