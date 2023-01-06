@@ -89,11 +89,15 @@ public class Model {
                 System.out.println("failure =" + p.getFailure());
                 totalFailure += p.getFailure();
                 System.out.println("Changes =" + p.getChangeCount());
-                var keys = ((Process) e).getCompletedById().keySet();
+                var keys = ((Process) e).getInById().keySet();
                 for (var i :
                         keys) {
-                    var timeInProcess = p.getMeanLoadById().get(i)/p.getCompletedById().get(i);
-                    var timeWaiting = p.getMeanQueueById().get(i)/p.getCompletedById().get(i);
+                    var timeInProcess = p.getMeanLoadById().containsKey(i) ?
+                            p.getMeanLoadById().get(i)/p.getInById().get(i):
+                            0;
+                    var timeWaiting =p.getMeanQueueById().containsKey(i)?
+                            p.getMeanQueueById().get(i)/p.getInById().get(i):
+                            0;
                     var totalTime =  timeWaiting + timeInProcess;
                     totalTimeInModel += totalTime;
                     totalTimeInProcess += timeInProcess;
@@ -108,8 +112,11 @@ public class Model {
                     AddOrCreate(totalTimeById,i, totalTime);
                     AddOrCreate(totalTimeWorkingById, i, timeInProcess);
 
-                    System.out.println("Type " + i + " mean load of process = " +
-                            p.getMeanLoadById().get(i) / timeCurrent / p.getMaxState());
+                    var load = p.getMeanLoadById().containsKey(i) ?
+                            p.getMeanLoadById().get(i) / timeCurrent / p.getMaxState() :
+                            0;
+
+                    System.out.println("Type " + i + " mean load of process = " + load);
                     System.out.println("Type " + i + " mean total time in process =" +
                             totalTime);
                     System.out.println("Type " + i + " mean time waiting ="+

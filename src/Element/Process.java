@@ -9,7 +9,6 @@ import java.util.*;
 public class Process extends Element {
     private boolean waitToIN;
     protected int maxState;
-    private int inCount;
 
     private final Map<Integer, Double> meanQueueById;
     private final Map<Integer, Double> meanLoadById;
@@ -17,6 +16,7 @@ public class Process extends Element {
     protected final Map<Integer, Integer> changedById;
     protected final Map<Integer, Integer> failureById;
     protected final Map<Integer, Integer> completedById;
+    protected final Map<Integer, Integer> inById;
     protected Queue queue;
     private NextProcessManager nextProcessManager;
     protected Map<Integer,ChangeProcessManager> changeProcessManagerMap;
@@ -29,6 +29,7 @@ public class Process extends Element {
         meanLoadById = new HashMap<>();
         changedById = new HashMap<>();
         failureById =new HashMap<>();
+        inById = new HashMap<>();
         maxState = 1;
         nextTimeQueue = new PriorityQueue<>(new PairComparator());
         completedById = new HashMap<>();
@@ -70,7 +71,7 @@ public class Process extends Element {
         super.setTimeNext(nextTimeQueue.peek().getKey());
     }
     public void inAct(int queueId) {
-        setInCount(getInCount()+1);
+        IncrementOrCreate(inById, queueId);
         if (super.getState() < maxState) {
             var timeNext = super.getTimeCurrent() + getDelay(queueId);
             IncrementOrCreate(stateById, queueId);
@@ -298,15 +299,16 @@ public class Process extends Element {
     public Map<Integer, Integer> getCompletedById() {return completedById;}
 
     public int getInCount() {
-        return inCount;
+        return sumInt(inById);
+    }
+    public Map<Integer, Integer> getInById(){
+        return inById;
     }
 
-    public void setInCount(int inCount) {
-        this.inCount = inCount;
-    }
+
     @Override
     public void printResult(){
         super.printResult();
-        System.out.println("in Quantity =" + inCount);
+        System.out.println("in Quantity =" + getInCount());
     }
 }

@@ -50,7 +50,7 @@ public class ProcessTaker extends Process{
                 Interrupt();
             }
         }else {
-            setInCount(getInCount()+1);
+            IncrementOrCreate(inById, queueId);
         if (super.getState() < maxState && locker.canTake(idTake.get(queueId))) {
             double timeNext;
             if(getState() == getMaxState() && interruptTime > getTimeCurrent()){
